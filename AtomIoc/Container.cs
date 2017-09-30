@@ -12,28 +12,29 @@ namespace AtomIoc
 {
     public class Container : DisposalScope, IScope, IEnumerable<IStrategy>
     {
-        protected static ImmutableHashTree<Type, StrategyCollection> DefaultStrategies =
-            ImmutableHashTree<Type, StrategyCollection>.Empty;
-
-        static Container()
-        {
-            var strategy = new ContainerStrategy();
-
-            ImmutableHashTree.ThreadSafeAdd(ref DefaultStrategies, typeof(Container), new StrategyCollection()).AddStrategy(strategy);
-            ImmutableHashTree.ThreadSafeAdd(ref DefaultStrategies, typeof(IScope), new StrategyCollection()).AddStrategy(strategy);
-            ImmutableHashTree.ThreadSafeAdd(ref DefaultStrategies, typeof(IEnumerable<>), new StrategyCollection()).AddStrategy(new EnumerableStrategy());
-        }
-
         protected ImmutableLinkedList<IInterceptorProvider> InterceptorsField = ImmutableLinkedList<IInterceptorProvider>.Empty;
         protected ImmutableLinkedList<IMemberInjectionSelector> MemberInjectionSelectorsField = ImmutableLinkedList<IMemberInjectionSelector>.Empty;
         protected ImmutableHashTree<object, object> ExtraData = ImmutableHashTree<object, object>.Empty;
-        protected ImmutableHashTree<Type, StrategyCollection> Strategies = DefaultStrategies;
+        protected ImmutableHashTree<Type, StrategyCollection> Strategies = ImmutableHashTree<Type, StrategyCollection>.Empty;
         protected ImmutableHashTree<KeyedType, StrategyCollection> KeyedStrategies = ImmutableHashTree<KeyedType, StrategyCollection>.Empty;
 
         public Container(ContainerConfiguration configuration = null, string name = null)
         {
             Configuration = configuration ?? new ContainerConfiguration();
             Name = name ?? "";
+
+            var strategy = new ContainerStrategy();
+
+            ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(Container), new StrategyCollection()).AddStrategy(strategy);
+            ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(IScope), new StrategyCollection()).AddStrategy(strategy);
+            ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(IEnumerable<>), new StrategyCollection()).AddStrategy(new EnumerableStrategy());
+        }
+
+        protected Container(Container parent, ContainerConfiguration configuration, string name)
+        {
+            Configuration = configuration;
+            Name = name ?? "";
+            Parent = parent;
         }
 
         public ContainerConfiguration Configuration { get; }
@@ -111,7 +112,7 @@ namespace AtomIoc
             {
                 return new ArrayStrategy();
             }
-            
+
             return Parent?.FindStrategy(injectionContext, filter);
         }
 
@@ -171,7 +172,7 @@ namespace AtomIoc
 
         public virtual Container Child(Action<Container> configure = null, string name = null)
         {
-            var newContainer = new Container(Configuration, name) { Parent = this };
+            var newContainer = new Container(this, Configuration, name);
 
             configure?.Invoke(newContainer);
 

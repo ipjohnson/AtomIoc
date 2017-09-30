@@ -1,5 +1,3 @@
-Property Injection
-Member Selector
 Initializer
 Open Generic
 Missing Strategy Provider
