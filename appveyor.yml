@@ -1,6 +1,8 @@
 environment:
   build_version: 1.0.0
   Version: $(build_version)-Beta%APPVEYOR_BUILD_NUMBER%
+  COVERALLS_REPO_TOKEN:
+    secure: r1taRk45mfo+Qs7ERGSa1binc2VAYs4d97HPTKypJPYxeCxw2lHGjZRJ5BK3tOaP
 version: $(build_version)-{build}
 configuration: Release
 assembly_info:
@@ -19,6 +21,9 @@ build:
 after_build:
 - cmd: msbuild /t:pack AtomIoc/AtomIoc.csproj /p:Configuration=Release /p:IncludeSymbols=true /p:PackageOutputPath=..\..\
 - cmd: msbuild /t:pack AtomIoc.Register/AtomIoc.Register.csproj /p:Configuration=Release /p:IncludeSymbols=true /p:PackageOutputPath=..\..\
+test_script:
+- cmd: cd AtomIoc.Tests/
+- cmd: CodeCoverageAppVeyor.cmd
 artifacts:
 - path: AtomIoc*.nupkg
   name: AtomIoc
