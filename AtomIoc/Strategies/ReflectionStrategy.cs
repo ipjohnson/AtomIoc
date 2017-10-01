@@ -8,7 +8,7 @@ using AtomIoc.Interfaces;
 
 namespace AtomIoc.Strategies
 {
-    public class ReflectionStrategy : BasicStrategy, IConfigurableStrategy
+    public class ReflectionStrategy : BasicStrategy
     {
         protected ImmutableLinkedList<Action<InjectionContext>> MemberInjection;
         protected ConstructorInfo CachedConstructor;
@@ -33,10 +33,10 @@ namespace AtomIoc.Strategies
         protected override void ActivateStrategy(InjectionContext context)
         {
             object instance = null;
+
             if (CachedConstructor != null)
             {
                 instance = AttemptToInvokeConstructor(context, CachedConstructor);
-
             }
             else
             {
@@ -63,7 +63,7 @@ namespace AtomIoc.Strategies
             if (instance != null)
             {
                 context.Instance = instance;
-
+                
                 if (MemberInjection == null)
                 {
                     SetupMemberInjectionList();

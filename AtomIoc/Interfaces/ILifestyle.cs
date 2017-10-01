@@ -6,7 +6,7 @@ namespace AtomIoc.Interfaces
 {
     public interface ILifestyle
     {
-        void GetValue(InjectionContext context, Container container, Action<InjectionContext> createValue);
+        void GetValue(InjectionContext context, Container container, bool externallyOwned, Action<InjectionContext> createValue);
 
         ILifestyle Clone();
     }

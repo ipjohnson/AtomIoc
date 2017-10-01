@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using AtomIoc.Data;
 using AtomIoc.Interfaces;
+using AtomIoc.Metadata;
 
 namespace AtomIoc.Strategies
 {
@@ -15,6 +16,7 @@ namespace AtomIoc.Strategies
         protected IInterceptor[] InsideLifestyleInterceptors;
         protected IInterceptor[] OutsideLifestyleInterceptors;
         protected Container Container;
+        protected EditableMetadata EditableMetadata = new EditableMetadata();
 
         protected BasicStrategy(Container container) => Container = container;
 
@@ -24,10 +26,20 @@ namespace AtomIoc.Strategies
         public abstract Type ActivationType { get; }
 
         /// <summary>
+        /// Metadata for strategy
+        /// </summary>
+        public IMetadata Metadata => EditableMetadata;
+
+        /// <summary>
         /// Lifestyle for strategy
         /// </summary>
         public virtual ILifestyle Lifestyle { get; set; }
-        
+
+        /// <summary>
+        /// Is the strategy externally owned
+        /// </summary>
+        public virtual bool ExternallyOwned { get; set; }
+
         /// <summary>
         /// Does this strategy meet conditions to be used
         /// </summary>
@@ -63,11 +75,16 @@ namespace AtomIoc.Strategies
 
             if (Lifestyle != null)
             {
-                Lifestyle.GetValue(context, Container, ActivateStrategy);
+                Lifestyle.GetValue(context, Container, false, ActivateStrategy);
             }
             else
             {
                 ActivateStrategy(context);
+
+                if (!ExternallyOwned && context.Instance is IDisposable)
+                {
+                    context.Container.AddDisposable(context.Instance);
+                }
             }
 
             if (OutsideLifestyleInterceptors != EmptyInterceptors)
@@ -87,6 +104,11 @@ namespace AtomIoc.Strategies
         public virtual void AddCondition(ICondition condition)
         {
             Conditions = Conditions.Add(condition);
+        }
+
+        public virtual void AddMetadata(object key, object value)
+        {
+            EditableMetadata.AddData(key, value);
         }
 
         protected abstract void ActivateStrategy(InjectionContext context);

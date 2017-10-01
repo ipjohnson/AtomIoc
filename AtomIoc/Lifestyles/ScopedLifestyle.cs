@@ -9,7 +9,7 @@ namespace AtomIoc.Lifestyles
     {
         protected string UniqueId = Utilities.UniqueId.Generate();
 
-        public void GetValue(InjectionContext context, Container container, Action<InjectionContext> createValue)
+        public void GetValue(InjectionContext context, Container container, bool externallyOwned, Action<InjectionContext> createValue)
         {
             var value = context.Container.GetExtraData(UniqueId);
 
@@ -23,6 +23,11 @@ namespace AtomIoc.Lifestyles
 
             // use the one set just incase another thread got there first
             context.Instance = context.Container.SetExtraData(UniqueId, context.Instance);
+
+            if (!externallyOwned && context.Instance is IDisposable)
+            {
+                context.Container.AddDisposable(context.Instance);
+            }
         }
 
         public ILifestyle Clone()

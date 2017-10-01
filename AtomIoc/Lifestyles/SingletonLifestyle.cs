@@ -10,7 +10,7 @@ namespace AtomIoc.Lifestyles
         private volatile object _singleton;
         private readonly object _lockObject = new object();
 
-        public void GetValue(InjectionContext context, Container container, Action<InjectionContext> createValue)
+        public void GetValue(InjectionContext context, Container container, bool externallyOwned, Action<InjectionContext> createValue)
         {
             if (_singleton != null)
             {
@@ -33,6 +33,11 @@ namespace AtomIoc.Lifestyles
                     if (currentContext != context)
                     {
                         context.Instance = currentContext.Instance;
+                    }
+
+                    if (!externallyOwned && context.Instance is IDisposable)
+                    {
+                        container.AddDisposable(context.Instance);
                     }
                 }
                 else

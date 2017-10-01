@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using AtomIoc.Interfaces;
+using AtomIoc.Metadata;
 
 namespace AtomIoc.Strategies
 {
@@ -19,6 +20,10 @@ namespace AtomIoc.Strategies
         /// Lifestyle for strategy
         /// </summary>
         public ILifestyle Lifestyle => null;
+        /// <summary>
+        /// Metadata for strategy
+        /// </summary>
+        public IMetadata Metadata => EmptyMetadata.Instance;
 
         /// <summary>
         /// Activate the strategy

@@ -15,7 +15,7 @@ namespace AtomIoc.Lifestyles
             ScopeName = scopeName;
         }
 
-        public void GetValue(InjectionContext context, Container container, Action<InjectionContext> createValue)
+        public void GetValue(InjectionContext context, Container container, bool externallyOwned, Action<InjectionContext> createValue)
         {
             var namedScope = context.Container;
 
@@ -41,6 +41,11 @@ namespace AtomIoc.Lifestyles
 
             // use the one set just incase another thread got there first
             context.Instance = namedScope.SetExtraData(UniqueId, context.Instance);
+
+            if (!externallyOwned && context.Instance is IDisposable)
+            {
+                namedScope.AddDisposable(context.Instance);
+            }
         }
 
         public ILifestyle Clone()

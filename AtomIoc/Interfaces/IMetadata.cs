@@ -5,8 +5,10 @@ using AtomIoc.Data;
 
 namespace AtomIoc.Interfaces
 {
-    public interface IMetadata : IExtraDataContainer
+    public interface IMetadata
     {
+        bool Has(object key);
 
+        T GetValueOrDefault<T>(object key, T defaultT = default(T));
     }
 }

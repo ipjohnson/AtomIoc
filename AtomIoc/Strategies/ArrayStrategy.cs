@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using AtomIoc.Interfaces;
+using AtomIoc.Metadata;
 
 namespace AtomIoc.Strategies
 {
@@ -13,6 +14,11 @@ namespace AtomIoc.Strategies
         /// Activation type for strategy
         /// </summary>
         public Type ActivationType => typeof(Array);
+
+        /// <summary>
+        /// Metadata for strategy
+        /// </summary>
+        public IMetadata Metadata => EmptyMetadata.Instance;
 
         /// <summary>
         /// Lifestyle for strategy

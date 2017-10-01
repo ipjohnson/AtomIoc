@@ -15,6 +15,11 @@ namespace AtomIoc.Interfaces
         Type ActivationType { get; }
 
         /// <summary>
+        /// Metadata for strategy
+        /// </summary>
+        IMetadata Metadata { get; }
+
+        /// <summary>
         /// Lifestyle for strategy
         /// </summary>
         ILifestyle Lifestyle { get; }
