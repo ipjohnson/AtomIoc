@@ -17,7 +17,7 @@ namespace AtomIoc
         protected ImmutableHashTree<object, object> ExtraData = ImmutableHashTree<object, object>.Empty;
         protected ImmutableHashTree<Type, StrategyCollection> Strategies = ImmutableHashTree<Type, StrategyCollection>.Empty;
         protected ImmutableHashTree<KeyedType, StrategyCollection> KeyedStrategies = ImmutableHashTree<KeyedType, StrategyCollection>.Empty;
-        
+        protected ImmutableLinkedList<IMissingStrategyProvider> MissingStrategyProviders = ImmutableLinkedList<IMissingStrategyProvider>.Empty;
 
         public Container(ContainerConfiguration configuration = null, string name = null)
         {
@@ -29,7 +29,8 @@ namespace AtomIoc
             ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(Container), new StrategyCollection()).AddStrategy(strategy);
             ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(IScope), new StrategyCollection()).AddStrategy(strategy);
             ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(IEnumerable<>), new StrategyCollection()).AddStrategy(new EnumerableStrategy());
-            ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(Meta<>), new StrategyCollection()).AddStrategy(new MetaStrategy());
+
+            MissingStrategyProviders = MissingStrategyProviders.Add(new ConcreteStrategyProvider());
         }
 
         protected Container(Container parent, ContainerConfiguration configuration, string name)
@@ -76,23 +77,67 @@ namespace AtomIoc
 
         public IStrategy FindStrategy(InjectionContext injectionContext, Func<IStrategy, InjectionContext, bool> filter = null)
         {
-            StrategyCollection strategies = injectionContext.Key == null ?
-                Strategies.GetValueOrDefault(injectionContext.RequesType) :
-                KeyedStrategies.GetValueOrDefault(new KeyedType(injectionContext.RequesType, injectionContext.Key));
+            var strategy = LocateStrategy(injectionContext, filter);
+
+            if (strategy != null)
+            {
+                return strategy;
+            }
+
+            if (MissingStrategyProviders != ImmutableLinkedList<IMissingStrategyProvider>.Empty &&
+                ProcessMissingStrategyProviders(injectionContext))
+            {
+                strategy = LocateStrategy(injectionContext, filter);
+
+                if (strategy != null)
+                {
+                    return strategy;
+                }
+            }
+
+            return Parent?.FindStrategy(injectionContext, filter);
+        }
+
+        protected virtual bool ProcessMissingStrategyProviders(InjectionContext injectionContext)
+        {
+            bool found = false;
+
+            foreach (var provider in MissingStrategyProviders)
+            {
+                foreach (var strategyInfo in provider.ProvideStrategies(this, injectionContext))
+                {
+                    AddStrategy(strategyInfo.As, strategyInfo.AsKeyed, strategyInfo.Strategy);
+                    found = true;
+                }
+
+                if (found)
+                {
+                    break;
+                }
+            }
+
+            return found;
+        }
+
+        protected virtual IStrategy LocateStrategy(InjectionContext injectionContext, Func<IStrategy, InjectionContext, bool> filter)
+        {
+            StrategyCollection strategies = injectionContext.Key == null
+                ? Strategies.GetValueOrDefault(injectionContext.RequesType)
+                : KeyedStrategies.GetValueOrDefault(new KeyedType(injectionContext.RequesType, injectionContext.Key));
 
             if (strategies == null && injectionContext.RequesType.IsConstructedGenericType)
             {
                 var openGenericType = injectionContext.RequesType.GetGenericTypeDefinition();
 
-                strategies = injectionContext.Key == null ?
-                    Strategies.GetValueOrDefault(openGenericType) :
-                    KeyedStrategies.GetValueOrDefault(new KeyedType(openGenericType, injectionContext.Key));
+                strategies = injectionContext.Key == null
+                    ? Strategies.GetValueOrDefault(openGenericType)
+                    : KeyedStrategies.GetValueOrDefault(new KeyedType(openGenericType, injectionContext.Key));
             }
 
             if (strategies != null)
             {
                 var filteredStrategies =
-                    strategies.Strategies.Where(s => 
+                    strategies.Strategies.Where(s =>
                         s.MeetsCondition(injectionContext) && (filter?.Invoke(s, injectionContext) ?? true)).ToArray();
 
                 if (filteredStrategies.Length == 1)
@@ -115,7 +160,7 @@ namespace AtomIoc
                 return new ArrayStrategy();
             }
 
-            return Parent?.FindStrategy(injectionContext, filter);
+            return null;
         }
 
         /// <summary>
@@ -190,22 +235,28 @@ namespace AtomIoc
 
         public Container AddStrategy(IEnumerable<Type> asTypes, IEnumerable<KeyedType> asKeyedTypes, IStrategy strategy)
         {
-            foreach (var type in asTypes)
+            if (asTypes != null)
             {
-                var collection = Strategies.GetValueOrDefault(type) ??
-                    ImmutableHashTree.ThreadSafeAdd(ref Strategies, type, new StrategyCollection());
+                foreach (var type in asTypes)
+                {
+                    var collection = Strategies.GetValueOrDefault(type) ??
+                        ImmutableHashTree.ThreadSafeAdd(ref Strategies, type, new StrategyCollection());
 
-                collection.AddStrategy(strategy);
+                    collection.AddStrategy(strategy);
+                }
             }
 
-            foreach (var asKeyedType in asKeyedTypes)
+            if (asKeyedTypes != null)
             {
-                var keyedType = new KeyedType(asKeyedType.Type, asKeyedType.Key);
+                foreach (var asKeyedType in asKeyedTypes)
+                {
+                    var keyedType = new KeyedType(asKeyedType.Type, asKeyedType.Key);
 
-                var collection = KeyedStrategies.GetValueOrDefault(keyedType) ??
-                                 ImmutableHashTree.ThreadSafeAdd(ref KeyedStrategies, keyedType, new StrategyCollection());
+                    var collection = KeyedStrategies.GetValueOrDefault(keyedType) ??
+                                     ImmutableHashTree.ThreadSafeAdd(ref KeyedStrategies, keyedType, new StrategyCollection());
 
-                collection.AddStrategy(strategy);
+                    collection.AddStrategy(strategy);
+                }
             }
 
             return this;

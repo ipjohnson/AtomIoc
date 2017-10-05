@@ -16,6 +16,6 @@ namespace AtomIoc.Interfaces
 
     public interface IMissingStrategyProvider
     {
-        IEnumerable<StrategyInformation> ProvideStrategies(InjectionContext injectionContext);
+        IEnumerable<StrategyInformation> ProvideStrategies(Container container, InjectionContext injectionContext);
     }
 }
