@@ -175,19 +175,22 @@ namespace AtomIoc.Strategies
                     }
                 }
 
+                var parameterContext = 
+                    context.Child(parameter.ParameterType,
+                                  context.Container.Configuration.KeyFunction(parameter.ParameterType) ? parameter.Name : null,
+                                  parameter);
+
                 var strategy =
-                    context.Container.FindStrategy(context.Child(parameter.ParameterType,
-                        context.Container.Configuration.KeyFunction(parameter.ParameterType)
-                            ? parameter.Name
-                            : null,
-                        parameter));
+                    context.Container.FindStrategy(parameterContext);
 
                 if (strategy == null)
                 {
                     break;
                 }
 
-                values[i] = strategy.Activate(context);
+                parameterContext.Strategy = strategy;
+
+                values[i] = strategy.Activate(parameterContext);
             }
 
             return i == parameters.Length ? constructor.Invoke(values) : null;

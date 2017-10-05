@@ -17,6 +17,7 @@ namespace AtomIoc
         protected ImmutableHashTree<object, object> ExtraData = ImmutableHashTree<object, object>.Empty;
         protected ImmutableHashTree<Type, StrategyCollection> Strategies = ImmutableHashTree<Type, StrategyCollection>.Empty;
         protected ImmutableHashTree<KeyedType, StrategyCollection> KeyedStrategies = ImmutableHashTree<KeyedType, StrategyCollection>.Empty;
+        
 
         public Container(ContainerConfiguration configuration = null, string name = null)
         {
@@ -28,6 +29,7 @@ namespace AtomIoc
             ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(Container), new StrategyCollection()).AddStrategy(strategy);
             ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(IScope), new StrategyCollection()).AddStrategy(strategy);
             ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(IEnumerable<>), new StrategyCollection()).AddStrategy(new EnumerableStrategy());
+            ImmutableHashTree.ThreadSafeAdd(ref Strategies, typeof(Meta<>), new StrategyCollection()).AddStrategy(new MetaStrategy());
         }
 
         protected Container(Container parent, ContainerConfiguration configuration, string name)
@@ -90,8 +92,8 @@ namespace AtomIoc
             if (strategies != null)
             {
                 var filteredStrategies =
-                    strategies.Strategies.Where(s => s.MeetsCondition(injectionContext) &&
-                                                     (filter?.Invoke(s, injectionContext) ?? true)).ToArray();
+                    strategies.Strategies.Where(s => 
+                        s.MeetsCondition(injectionContext) && (filter?.Invoke(s, injectionContext) ?? true)).ToArray();
 
                 if (filteredStrategies.Length == 1)
                 {
@@ -159,7 +161,14 @@ namespace AtomIoc
         /// <returns></returns>
         object IScope.Locate(Type type, object withKey, object extraData, bool required, Func<IStrategy, InjectionContext, bool> filter)
         {
-            var context = new InjectionContext(type, withKey, this, extraData);
+            if (extraData is InjectionContext context)
+            {
+                context = context.Child(type, withKey);
+            }
+            else
+            {
+                context = new InjectionContext(type, withKey, this, extraData);
+            }
 
             var strategy = FindStrategy(context, filter);
 

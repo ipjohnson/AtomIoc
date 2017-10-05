@@ -9,5 +9,7 @@ namespace AtomIoc.Interfaces
         new ILifestyle Lifestyle { get; set; }
 
         void AddCondition(ICondition condition);
+
+        void AddMetadata(object key, object value);
     }
 }

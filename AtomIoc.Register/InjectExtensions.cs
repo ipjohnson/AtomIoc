@@ -28,7 +28,7 @@ namespace AtomIoc.Register
 
                 return context =>
                 {
-                    member.SetValue(context.Instance, context.Container.Resolve(member.PropertyType, key));
+                    member.SetValue(context.Instance, context.Resolve(member.PropertyType, key));
                 };
             }
             
@@ -53,7 +53,6 @@ namespace AtomIoc.Register
 
     public static class InjectExtensions
     {
-
         public static Container InjectAttributed(this Container container)
         {
             container.AddMemberInjctionSelector(new DependencyAttributeMemberSelector());

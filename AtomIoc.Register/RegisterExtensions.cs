@@ -144,6 +144,14 @@ namespace AtomIoc
                         strategy.Lifestyle = lifestyle;
                         break;
 
+                    case KeyValuePair<object, object> metadata:
+                        strategy.AddMetadata(metadata.Key, metadata.Value);
+                        break;
+
+                    case ICondition condition:
+                        strategy.AddCondition(condition);
+                        break;
+
                     default:
                         withKey = o;
                         break;
