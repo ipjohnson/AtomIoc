@@ -75,11 +75,11 @@ namespace AtomIoc.Strategies
 
             if (Lifestyle != null)
             {
-                Lifestyle.GetValue(context, Container, false, ActivateStrategy);
+                Lifestyle.GetValue(context, Container, false, InsideLifestyleActivateStrategy);
             }
             else
             {
-                ActivateStrategy(context);
+                InsideLifestyleActivateStrategy(context);
 
                 if (!ExternallyOwned && context.Instance is IDisposable)
                 {
@@ -99,6 +99,30 @@ namespace AtomIoc.Strategies
             }
 
             return context.Instance;
+        }
+
+        protected virtual void InsideLifestyleActivateStrategy(InjectionContext context)
+        {
+            if (InsideLifestyleInterceptors != EmptyInterceptors)
+            {
+                foreach (var interceptor in InsideLifestyleInterceptors)
+                {
+                    interceptor.BeforeConstruction(context);
+                }
+            }
+
+            if (context.Instance == null)
+            {
+                ActivateStrategy(context);
+            }
+
+            if (InsideLifestyleInterceptors != EmptyInterceptors)
+            {
+                foreach (var interceptor in InsideLifestyleInterceptors)
+                {
+                    interceptor.AfterConstruction(context);
+                }
+            }
         }
 
         public virtual void AddCondition(ICondition condition)

@@ -6,7 +6,7 @@ using AtomIoc.Interfaces;
 
 namespace AtomIoc.Register
 {
-    public class DependencyAttributeMemberSelector : IMemberInjectionSelector
+    public class DependencyAttributeMemberSelector<T> : IMemberInjectionSelector where T : Attribute
     {
         public class PropertyInjector : IMemberInjectionInfo
         {
@@ -30,8 +30,7 @@ namespace AtomIoc.Register
                 {
                     member.SetValue(context.Instance, context.Resolve(member.PropertyType, key));
                 };
-            }
-            
+            }       
         }
 
         public IEnumerable<IMemberInjectionInfo> GetMembersToInject(IEnumerable<MemberInfo> members)
@@ -55,9 +54,10 @@ namespace AtomIoc.Register
     {
         public static Container InjectAttributed(this Container container)
         {
-            container.AddMemberInjctionSelector(new DependencyAttributeMemberSelector());
+            container.AddMemberInjctionSelector(new DependencyAttributeMemberSelector<DependencyAttribute>());
 
             return container;
         }
+        
     }
 }
