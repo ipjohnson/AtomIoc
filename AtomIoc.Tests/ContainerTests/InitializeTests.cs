@@ -12,6 +12,7 @@ namespace AtomIoc.Tests.ContainerTests
         public interface IInitializeTestService
         {
             int Value { get; }
+
             void Init();
         }
 
