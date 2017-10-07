@@ -54,7 +54,7 @@ namespace AtomIoc.Register
     {
         public static Container InjectAttributed(this Container container)
         {
-            container.AddMemberInjctionSelector(new DependencyAttributeMemberSelector<DependencyAttribute>());
+            container.AddMemberInjectionSelector(new DependencyAttributeMemberSelector<DependencyAttribute>());
 
             return container;
         }

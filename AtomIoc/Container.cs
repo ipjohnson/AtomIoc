@@ -291,7 +291,7 @@ namespace AtomIoc
         /// </summary>
         /// <param name="memberInjectionSelector"></param>
         /// <returns></returns>
-        public Container AddMemberInjctionSelector(IMemberInjectionSelector memberInjectionSelector)
+        public Container AddMemberInjectionSelector(IMemberInjectionSelector memberInjectionSelector)
         {
             MemberInjectionSelectorsField = MemberInjectionSelectorsField.Add(memberInjectionSelector);
 
