@@ -259,5 +259,14 @@ namespace AtomIoc.Tests.Data
 
             _countdownEvent.Signal();
         }
+
+        [Fact]
+        public void ThreadSafeAddRemove()
+        {
+            var list = ImmutableLinkedList.Create(1, 2, 3);
+
+            ImmutableLinkedList.ThreadSafeRemove(ref list, 2);
+
+        }
     }
 }

@@ -15,7 +15,7 @@ namespace AtomIoc.Utilities
         /// <summary>
         /// Post fix for all generated id
         /// </summary>
-        public static string Postfix { get; set; } = "-|";
+        public static string Postfix { get; set; } = "-a";
 
         /// <summary>
         /// Generate unique id for application space

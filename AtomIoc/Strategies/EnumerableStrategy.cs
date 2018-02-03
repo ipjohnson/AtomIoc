@@ -52,9 +52,17 @@ namespace AtomIoc.Strategies
             {
                 var newContext = context.Child(typeof(T), null);
 
-                yield return (T)strategy.Activate(newContext);
+                if (strategy is IWrapperStrategy)
+                {
+
+                }
+                else
+                {
+                    yield return (T) strategy.Activate(newContext);
+                }
             }
         }
+        
 
         /// <summary>
         /// Does this strategy meet conditions to be used

@@ -82,6 +82,57 @@ namespace AtomIoc.Data
             }
         }
 
+        public static void ThreadSafeRemove<T>(ref ImmutableLinkedList<T> list, T value)
+        {
+            if (list == null) throw new ArgumentNullException(nameof(list));
+
+            var current = list;
+            var listValue = current;
+            var newList = ImmutableLinkedList<T>.Empty;
+
+            list.Visit(x =>
+            {
+                if (!x.Equals(value))
+                {
+                    newList = newList.Add(x);
+                }
+            },true);
+            
+            if (ReferenceEquals(Interlocked.CompareExchange(ref list, newList, listValue), listValue))
+            {
+                return;
+            }
+
+            RemoveWithWait(ref list, value);
+        }
+
+        private static void RemoveWithWait<T>(ref ImmutableLinkedList<T> list, T value)
+        {
+            var wait = new SpinWait();
+
+            while (true)
+            {
+                wait.SpinOnce();
+
+                var current = list;
+                var listValue = current;
+                var newList = ImmutableLinkedList<T>.Empty;
+
+                list.Visit(x =>
+                {
+                    if (!x.Equals(value))
+                    {
+                        newList = newList.Add(x);
+                    }
+                }, true);
+
+                if (ReferenceEquals(Interlocked.CompareExchange(ref list, newList, listValue), listValue))
+                {
+                    return;
+                }
+            }
+        }
+
         /// <summary>
         /// creates a new immutable linked list from an enumerable
         /// </summary>

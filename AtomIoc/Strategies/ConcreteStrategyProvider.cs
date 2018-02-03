@@ -28,6 +28,12 @@ namespace AtomIoc.Strategies
                     yield return new StrategyInformation{ As = new []{typeof(Meta<>)}, Strategy = new MetaStrategy()};
                     yield break;
                 }
+
+                if (genericType == typeof(Func<>))
+                {
+                    yield return new StrategyInformation { As = new[] { typeof(Func<>) }, Strategy = new NoArgFuncStrategy() };
+                    yield break;
+                }
             }
 
             if (typeInfo.DeclaredConstructors.Any(c => c.IsPublic && !c.IsAbstract))
